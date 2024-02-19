@@ -1,0 +1,75 @@
+Documentation Overview
+
+## PLATO.py
+
+This documentation covers a Python application designed to scrape articles from the Stanford Encyclopedia of Philosophy (SEP), organize the scraped data, and analyze the relationships between different articles using network analysis. The application consists of several classes and functions that facilitate web scraping, data storage, and network graph creation.
+Dependencies
+
+    time: Used to measure the execution time of the script.
+    requests: For making HTTP requests to the SEP website.
+    bs4 (BeautifulSoup): For parsing HTML content and extracting information.
+    os: For interacting with the file system, particularly for creating directories.
+    json: For loading and saving article metadata in JSON format.
+    urllib.parse (urljoin): For constructing full URLs from relative paths.
+    re: For regular expressions, used in parsing and cleaning URLs.
+    numpy (np): For creating and manipulating arrays, specifically adjacency matrices.
+    networkx (nx): For creating and analyzing network graphs.
+    matplotlib.pyplot (plt): For visualizing network graphs.
+    logging: For logging errors that occur during HTTP requests.
+
+Classes and Their Methods
+WebScraper
+
+    Purpose: Handles the web scraping functionality.
+    Methods:
+        __init__(url): Initializes the scraper with a URL.
+        scrape(): Makes an HTTP request to the URL, parses the HTML content, and returns a BeautifulSoup object if successful.
+        get_initial_paragraph(soup): Extracts and returns the first paragraph of the article.
+        get_headings(soup): Returns a list of headings found in the article.
+        get_content_under_headings(soup): Returns a dictionary mapping headings to their subsequent content.
+        get_related_entries(soup): Extracts and returns a dictionary of related entries and their URLs.
+
+Node
+
+    Purpose: Represents a node in a tree structure.
+    Methods:
+        __init__(name): Initializes a node with a name.
+        print(indent): Prints the node and its children with indentation.
+
+DBreader
+
+    Purpose: Manages reading and storing article metadata.
+    Methods:
+        __init__(): Initializes the reader, creates a directory for articles, and loads existing metadata.
+        load_data(): Loads metadata from a JSON file.
+        get_metadata_titles(), get_article_urls(): Return sets of titles and URLs from the metadata.
+        has_title(title), has_link(link): Check if a title or link exists in the metadata.
+        find_article(article), get_related_entries(reference): Retrieve specific article data or related entries.
+
+SepFetcher
+
+    Purpose: Fetches and stores articles from SEP.
+    Methods:
+        __init__(): Initializes the fetcher and creates a directory for articles.
+        _load_downloaded_articles(): Returns a set of already downloaded article URLs.
+        _save_metadata(articles): Saves new article metadata to a JSON file.
+        _is_valid_article_link(link): Checks if a link is a valid article link.
+        fetch_sep_article_named(article_title): Fetches a single article by title.
+        ind_fetch_helper(url): Helper function to fetch and process an individual article.
+        fetch_sep_articles(num_articles): Fetches a specified number of articles from SEP.
+
+Utility Functions
+
+    create_tree(lst): Builds a tree structure from a list of items.
+    create_adjacency_matrix(graph): Creates an adjacency matrix from a graph dictionary.
+
+Main Execution Flow
+
+    Initialization: The DBreader and SepFetcher classes are instantiated.
+    Data Collection: The SepFetcher class is used to fetch articles from SEP, which are then processed and stored using methods from both SepFetcher and WebScraper.
+    Network Analysis: After collecting and organizing the articles, a network graph is constructed based on the relationships between articles. This graph is then visualized using matplotlib and networkx.
+
+Conclusion
+
+This documentation provides an overview and detailed descriptions of the components of a web scraping and network analysis application designed for SEP articles. Each class and function is designed with a specific part of the scraping, data handling, or analysis process in mind. By understanding the purpose and usage of each component, developers can effectively utilize, modify, or extend the application to meet additional requirements or adapt to other web scraping and data analysis projects.
+

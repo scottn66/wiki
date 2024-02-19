@@ -46,4 +46,5 @@ class ArticleAnalyzer:
 
 if __name__ == "__main__":
     analyzer = ArticleAnalyzer("sep_articles")
+    # bigrams
     analyzer.run_analysis()

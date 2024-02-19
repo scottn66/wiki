@@ -76,11 +76,11 @@ if __name__ == "__main__":
 
 
     # Aesthetic border
-    print("\n\n\n" + "%" * 50)
-    print("%" + " " * 48 + "%")
-    print("%" + " " * 20 + "MEDIA" + " " * 23 + "%")
-    print("%" + " " * 48 + "%")
-    print("%" * 50 + "\n")
+    # print("\n\n\n" + "%" * 50)
+    # print("%" + " " * 48 + "%")
+    # print("%" + " " * 20 + "MEDIA" + " " * 23 + "%")
+    # print("%" + " " * 48 + "%")
+    # print("%" * 50 + "\n")
     display = ArticleDisplay()
     display.display_random_article()
     display_width = len(display.article_title) + 12

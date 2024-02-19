@@ -160,6 +160,24 @@ class DBreader:
                         rels[title] = link
                 return rels
 
+    def search(self, keyword):
+        keyword = keyword.lower()
+        matching_articles = []
+
+        for article in self.data:
+            # Check if keyword is in title or initial paragraph
+            if keyword in article['title'].lower() or keyword in article.get('initial_paragraph', '').lower():
+                matching_articles.append(article)
+                continue
+
+            # Check if keyword is in the content under any heading
+            for content in article.get('content', {}).values():
+                if keyword in content.lower():
+                    matching_articles.append(article)
+                    break  # Break to avoid adding the same article multiple times
+
+        return matching_articles
+
 
 
 class SepFetcher:
@@ -192,11 +210,6 @@ class SepFetcher:
     def _is_valid_article_link(self, link):
         return link.name == 'li' and link.a and 'href' in link.a.attrs and link.a['href'].startswith('entries/')
 
-        """ 
-        With an article's content (e.g. plato, causation), fetch the article's contents and store it.
-        PARAMS: 
-            articles: list of titles
-        """
     def fetch_sep_article_named(self, article_title):
         # pretend articles just has one item
         print(f"fetching {article_title}...")
@@ -297,39 +310,44 @@ def create_adjacency_matrix(graph):
 if __name__ == "__main__":
 
     db = DBreader()
-    print(len(db.titles), 'titles')
     fetcher = SepFetcher()
+    search_result = db.search('aristotle')[0]
+    print(search_result['title'])
+    for rel_title, rel_link in search_result['related_entries'].items():
+        print(f"Fetching related article: {rel_title}")
+        fetcher.fetch_sep_article_named(rel_link)
 
 
-    G = {}
-
-    for title in db.titles:
-        rels = db.get_related_entries(title)
-        G[title] = [rel for rel in rels.keys() if rel in db.titles]
-        # for title, link in rels.items():
-            # print('\n', title, link)
-            # fetcher.fetch_sep_article_named(link)
-
-    adj_m = create_adjacency_matrix(G)
-    print(adj_m)
-
-    G_nx = nx.Graph()
-    for i in range(len(adj_m)):
-        for j in range(len(adj_m)):
-            if adj_m[i][j] == 1:
-                G_nx.add_edge(i, j)
-
-    # Choose a layout for your graph
-    layout = nx.spring_layout(G_nx)  # Other layouts: circular_layout, random_layout, shell_layout
-
-    # Draw the graph
-    nx.draw_networkx(G_nx, layout)
-    nx.draw_networkx_nodes(G_nx, layout, node_color='blue', node_size=50)  # For more customization
-    nx.draw_networkx_edges(G_nx, layout, edge_color='gray')
-    nx.draw_networkx_labels(G_nx, layout)
+    # graph G: each node is a sep_page, arrows point to related entry pages.
+    # G = {}
+    #
+    # for title in db.titles:
+    #     rels = db.get_related_entries(title)
+    #     G[title] = [rel for rel in rels.keys() if rel in db.titles]
+    #     # for title, link in rels.items():
+    #         # print('\n', title, link)
+    #         # fetcher.fetch_sep_article_named(link)
+    #
+    # adj_m = create_adjacency_matrix(G)
+    # print(adj_m)
+    #
+    # G_nx = nx.Graph()
+    # for i in range(len(adj_m)):
+    #     for j in range(len(adj_m)):
+    #         if adj_m[i][j] == 1:
+    #             G_nx.add_edge(i, j)
+    #
+    # # Choose a layout for your graph
+    # layout = nx.spring_layout(G_nx)  # Other layouts: circular_layout, random_layout, shell_layout
+    #
+    # # Draw the graph
+    # nx.draw_networkx(G_nx, layout)
+    # nx.draw_networkx_nodes(G_nx, layout, node_color='blue', node_size=50)  # For more customization
+    # nx.draw_networkx_edges(G_nx, layout, edge_color='gray')
+    # nx.draw_networkx_labels(G_nx, layout)
 
     # Show the plot
-    plt.show()
+    # plt.show()
 
     # To save the plot to a file
     # plt.savefig('graph_visualization.png')
