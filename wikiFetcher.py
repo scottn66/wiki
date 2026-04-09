@@ -15,14 +15,56 @@ Currently just searches for a given list of articles which are all stored from a
 
 
 class WebScraper:
-    def __init__(self, url):
+    def __init__(self, url, user_agent=None):
         self.url = url
         self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": user_agent or "WikiPageBot/1.0 (https://github.com/scottn66/wiki; snelso43@lion.lmu.edu)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive",
+            "Referer": "https://en.wikipedia.org/",
+        })
 
-    def scrape(self):
-        response = self.session.get(self.url)
+    def scrape(self, timeout=15):
+        response = self.session.get(self.url, timeout=timeout)
         soup = BeautifulSoup(response.text, 'html.parser')
-        return soup
+        return response, soup
+
+    def validate_wikipedia_soup(self, response, soup):
+        """
+        Validate that the fetched page looks like a real Wikipedia article
+        with parseable content.
+        """
+        if response.status_code != 200:
+            return False, f"HTTP {response.status_code}"
+
+        if soup.select_one("table.noarticletext") or soup.select_one("#noarticletext"):
+            return False, "Missing article page"
+
+        title_element = soup.select_one("h1#firstHeading") or soup.find("h1")
+        if title_element is None:
+            return False, "Missing article title heading"
+
+        content_root = soup.select_one("div.mw-parser-output")
+        if content_root is None:
+            return False, "Missing article content container"
+
+        paragraphs = [
+            paragraph.get_text(strip=True)
+            for paragraph in content_root.find_all("p")
+        ]
+        substantive_paragraphs = [text for text in paragraphs if len(text) > 40]
+        if not substantive_paragraphs:
+            return False, "No substantive paragraph content"
+
+        categories_element = soup.select_one("#mw-normal-catlinks")
+        if categories_element:
+            categories_text = categories_element.get_text(" ", strip=True).lower()
+            if "disambiguation" in categories_text:
+                return False, "Disambiguation page"
+
+        return True, "ok"
 
     def get_headings(self, soup):
         headings = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
@@ -72,7 +114,7 @@ def create_tree(lst):
             continue
         node = Node(name)
         nodes[level] = node
-        
+
         # Ensure the parent level exists before trying to access it
         if level - 1 in nodes:
             parent = nodes[level-1]
@@ -82,8 +124,8 @@ def create_tree(lst):
 
 class WikipediaFetcher:
     def __init__(self):
-        user_agent = "WikiPageBot/1.0 (https://github.com/scottn66/wiki; snelso43@lion.lmu.edu) wikipediaapi/0.1"
-        self.wiki_wiki = wikipediaapi.Wikipedia(language='en', user_agent=user_agent)
+        self.user_agent = "WikiPageBot/1.0 (https://github.com/scottn66/wiki; snelso43@lion.lmu.edu) wikipediaapi/0.1"
+        self.wiki_wiki = wikipediaapi.Wikipedia(language='en', user_agent=self.user_agent)
         self.directory = "wikipedia_articles"
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
@@ -117,13 +159,23 @@ class WikipediaFetcher:
             formatted_title = title.replace(" ", "_")
             url = base_url + formatted_title
             
-            if url in self._load_downloaded_articles():
+            if url in self.downloaded_articles:
                 print(f"Article: {title} Already downloaded.")
                 continue
 
-            scraper = WebScraper(url)
-            article_soup = scraper.scrape()
-            title_element = article_soup.find('h1')
+            scraper = WebScraper(url, user_agent=self.user_agent)
+            try:
+                response, article_soup = scraper.scrape()
+            except requests.RequestException as exc:
+                print(f"Skipping {url}; request failed: {exc}")
+                continue
+
+            is_valid, reason = scraper.validate_wikipedia_soup(response, article_soup)
+            if not is_valid:
+                print(f"Skipping {url}; validation failed: {reason}")
+                continue
+
+            title_element = article_soup.select_one("h1#firstHeading") or article_soup.find('h1')
             
             # Check if title exists
             if title_element is None:

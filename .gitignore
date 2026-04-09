@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets
+.env
+.env.local
+*.key
+
+# Scraper runtime caches (output, not source)
+wikipedia_articles/
+sep_articles/
+arxiv_articles/
+arxiv_out/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+notebooks/*.db
+
+# Logs
+*.log
