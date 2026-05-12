@@ -14,12 +14,23 @@ import logging
 
 
 class WebScraper:
-    def __init__(self, url):
-        self.url = url
+    USER_AGENT = (
+        "CogSciWikiBot/0.1 "
+        "(https://github.com/scottn66/wiki; snelso43@lion.lmu.edu)"
+    )
 
-    def scrape(self):
+    def __init__(self, url, user_agent=None):
+        self.url = url
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": user_agent or self.USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+
+    def scrape(self, timeout=20):
         try:
-            response = requests.get(self.url)
+            response = self.session.get(self.url, timeout=timeout)
             # Check if the request was successful
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')

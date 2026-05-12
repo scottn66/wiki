@@ -1,0 +1,11 @@
+beautifulsoup4
+feedparser
+matplotlib
+networkx
+nltk
+numpy
+PyPDF2
+requests
+SPARQLWrapper
+tqdm
+wikipedia-api

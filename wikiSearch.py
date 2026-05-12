@@ -66,6 +66,7 @@ class WikiPage:
 
 class WikipediaFetcher:
     directory = "wikipedia_articles"
+    user_agent = "WikiPageBot/1.0 (https://github.com/scottn66/wiki; snelso43@lion.lmu.edu) wikipediaapi/0.1"
 
     @staticmethod
     def fetch_wikipedia_articles(keyword, num_articles=3):
@@ -79,21 +80,47 @@ class WikipediaFetcher:
             "srlimit": num_articles
         }
 
-        response = requests.get(base_url, params=params)
-        data = response.json()
+        headers = {
+            "User-Agent": WikipediaFetcher.user_agent,
+            "Accept": "application/json,text/plain,*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
+        try:
+            response = requests.get(base_url, params=params, headers=headers, timeout=20)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"Wikipedia API request failed: {exc}")
+            return []
+
+        content_type = response.headers.get("Content-Type", "").lower()
+        if "json" not in content_type:
+            preview = response.text[:200].replace("\n", " ")
+            print(f"Wikipedia API returned non-JSON response ({content_type}): {preview}")
+            return []
+
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            preview = response.text[:200].replace("\n", " ")
+            print(f"Wikipedia API JSON decode failed. Response preview: {preview}")
+            return []
+
+        search_results = data.get("query", {}).get("search", [])
 
         articles = []
-        for article in data['query']['search']:
+        for article in search_results:
             title = article['title']
             wiki_page = WikiPage(title)
             articles.append(wiki_page)
 
         return articles
 
-# Example of how you might use it:
-fetcher = WikipediaFetcher()
-articles = fetcher.fetch_wikipedia_articles("philosophy", num_articles=3)
-for article in articles:
-    print(article.title)
-    print(article.summary)
-    print("----")
+if __name__ == "__main__":
+    # Example of how you might use it:
+    fetcher = WikipediaFetcher()
+    articles = fetcher.fetch_wikipedia_articles("philosophy", num_articles=3)
+    for article in articles:
+        print(article.title)
+        print(article.summary)
+        print("----")
