@@ -114,3 +114,10 @@ A unified `Source` record schema so all three scrapers emit into the same shape,
 ---
 
 *Author: Scott Nelson · [scottn66.github.io](https://scottn66.github.io) · [github.com/scottn66](https://github.com/scottn66)*
+
+## Lane
+
+This repo is the **reference/ancestor lane** for source fetching: the original Wikipedia,
+SEP and arXiv scrapers, kept as working portfolio code. New source or adapter work, and the
+"What's next" ideas above, are carried on in other projects. This repo is not expected to
+grow new sources.
